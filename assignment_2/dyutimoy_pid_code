@@ -1,0 +1,83 @@
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include "std_msgs/Int64.h"
+#include <stdio.h>
+#include <math.h>
+#include "kraken_msgs/thrusterData6Thruster.h"
+#include "kraken_msgs/thrusterData4Thruster.h"
+#include "kraken_msgs/imuData.h"
+#include "kraken_msgs/absoluteRPY.h"
+#include "resources/topicHeader.h"
+#define kp_left 0.5
+#define ki_left 0.5
+#define kd_left 0.5
+#define kp_right 0.5
+#define ki_right 0.5
+#define kd_right 0.5
+float32 yaw,roll,pitch,prevError,errorP,errorI,errorD;
+float32 inc_yaw=20;
+float32 count;
+
+void rpyCallback(const kraken_msgs::absoluteRPY &msg)
+{
+   
+  count=1;
+  if (count==1)
+    {   ini_yaw =msg->yaw;}
+  /* else 
+    {
+      prevError  = errorP;
+      errorP = (ini_yaw + inc_yaw-msg->yaw);//intial yaw and  increase in yaw needed
+      //may need to add a line
+      errorI = errorI + errorP;//adding the error
+      errorD = prevError - errorp;
+      // error = errorP + errorI + errorD;
+      
+      ROS_INFO ("the new position of yaw [%ld],the error is [%ld]",msg->yaw,error); 
+      
+    }
+  
+  */
+ 
+}
+
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "pidControl");
+  ros::NodeHandle n;
+  
+  ros::Subscriber imu_data=n.subscribe<kraken_msgs::absoluteRPY> (topicHeader.ABSOLUTE_RPY,1000,rpyCallback);
+  ros::Publisher thruster_6= n.advertise<kraken_msgs::thrusterData6Thruster>(topicHeader.CONTROL_PID_THRUSTER6,1000);
+  // ros::Publisher thruster_4= n.advertise<kraken_msgs::thrusterData4Thruster>(topicHeader.CONTROL_PID_THRUSTER4,1000);
+
+  kraken_msgs::thrusterData6Thruster thruster6_output;
+
+  while(ros::ok())
+    {
+      thruster6_output.data[0] = 0.0;
+      thruster6_output.data[1] = 0.0;
+      thruster6_output.data[2] =Kp_left*errorP + Kd_left*errorD + Ki_left*errorI;
+      thruster6_output.data[3] Kp_right*errorP + Kd_right*errorD + Ki_right*errorI=;
+      thruster6_output.data[4] = 0.0;
+      thruster6_output.data[5] = 0.0;
+      thruster_6.publish(thruster6_output);
+      ros::spinOnce();
+     
+    }
+  if(!ros::ok())
+     {
+      thruster6_output.data[0] = 0.0;
+      thruster6_output.data[1] = 0.0;
+      thruster6_output.data[2] =0.0;
+      thruster6_output.data[3] = 0.0;
+      thruster6_output.data[4] = 0.0;
+      thruster6_output.data[5] = 0.0;
+      thruster_6.publish(thruster6_output);
+       ros::spinOnce();
+      
+      
+    }
+   
+
+}
